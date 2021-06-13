@@ -132,7 +132,7 @@ uint8_t P_perm_and_xored(uint8_t* s_boxed, uint8_t* plaintext){
     return 0;
 }
 
-uint8_t DES(uint8_t* plaintext, uint8_t* ciphertext, uint8_t* key){
+uint8_t DES_en(uint8_t* plaintext, uint8_t* ciphertext, uint8_t* key){
     uint8_t subkey[8];
     uint8_t expansion[8];
     uint32_t temp1, temp2;
