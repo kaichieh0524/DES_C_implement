@@ -136,27 +136,29 @@ uint8_t DES(uint8_t* plaintext, uint8_t* ciphertext, uint8_t* key){
     uint8_t subkey[8];
     uint8_t expansion[8];
     uint32_t temp1, temp2;
+    uint8_t duplicate_key[8];
 
     memcpy(ciphertext, plaintext, sizeof(uint8_t)*8);
+    memcpy(duplicate_key, key, sizeof(uint8_t)*8);
     IP_or_IP_inv(ciphertext, IP);
-    PC_1_permutation(key);
+    PC_1_permutation(duplicate_key);
     /* 16 round encrypt*/
     for (int j = 0; j < 16; j++){
         /* compute round key */
         memset(subkey, 0, sizeof(subkey));
         memset(&temp1, 0, sizeof(temp1));
         memset(&temp2, 0, sizeof(temp2));
-        temp1 = (key[0] << 21) | (key[1] << 14) | (key[2] << 7) | key[3];
-        temp2 = (key[4] << 21) | (key[5] << 14) | (key[6] << 7) | key[7];
+        temp1 = (duplicate_key[0] << 21) | (duplicate_key[1] << 14) | (duplicate_key[2] << 7) | duplicate_key[3];
+        temp2 = (duplicate_key[4] << 21) | (duplicate_key[5] << 14) | (duplicate_key[6] << 7) | duplicate_key[7];
         temp1 = left_rot(temp1, shift_table[j]);
         temp2 = left_rot(temp2, shift_table[j]);
         for (int i = 0; i < 4; i++){
-            key[3 - i] = temp1 & 0b1111111;
-            key[7 - i] = temp2 & 0b1111111;
+            duplicate_key[3 - i] = temp1 & 0b1111111;
+            duplicate_key[7 - i] = temp2 & 0b1111111;
             temp1 = temp1 >> 7;
             temp2 = temp2 >> 7;
         }
-        PC_2_permutation(key, subkey);
+        PC_2_permutation(duplicate_key, subkey);
 
         /* compute f function */
         Expansion(ciphertext+4, expansion);

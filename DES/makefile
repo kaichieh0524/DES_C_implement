@@ -1,5 +1,5 @@
 main: test.c DES.c
-	gcc test.c DES.c -o test.exe
+	gcc test.c DES.c -o test.exe -g
 
 .PHONY : clean all
 
