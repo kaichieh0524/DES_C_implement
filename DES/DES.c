@@ -132,7 +132,7 @@ uint8_t P_perm_and_xored(uint8_t* s_boxed, uint8_t* plaintext){
     return 0;
 }
 
-uint8_t DES_en(uint8_t* plaintext, uint8_t* ciphertext, uint8_t* key){
+uint8_t DES_encrypt(uint8_t* plaintext, uint8_t* ciphertext, uint8_t* key){
     uint8_t subkey[8];
     uint8_t expansion[8];
     uint32_t temp1, temp2;
@@ -150,8 +150,8 @@ uint8_t DES_en(uint8_t* plaintext, uint8_t* ciphertext, uint8_t* key){
         memset(&temp2, 0, sizeof(temp2));
         temp1 = (duplicate_key[0] << 21) | (duplicate_key[1] << 14) | (duplicate_key[2] << 7) | duplicate_key[3];
         temp2 = (duplicate_key[4] << 21) | (duplicate_key[5] << 14) | (duplicate_key[6] << 7) | duplicate_key[7];
-        temp1 = left_rot(temp1, shift_table[j]);
-        temp2 = left_rot(temp2, shift_table[j]);
+        temp1 = left_rot(temp1, shift_table1[j]);
+        temp2 = left_rot(temp2, shift_table1[j]);
         for (int i = 0; i < 4; i++){
             duplicate_key[3 - i] = temp1 & 0b1111111;
             duplicate_key[7 - i] = temp2 & 0b1111111;
@@ -195,4 +195,70 @@ uint8_t DES_en(uint8_t* plaintext, uint8_t* ciphertext, uint8_t* key){
     } */
     return 0;
 }
+
+
+uint8_t DES_decrypt(uint8_t* ciphertext, uint8_t* plaintext, uint8_t* key){
+    uint8_t subkey[8];
+    uint8_t expansion[8];
+    uint32_t temp1, temp2;
+    uint8_t duplicate_key[8];
+
+    memcpy(plaintext, ciphertext, sizeof(uint8_t)*8);
+    memcpy(duplicate_key, key, sizeof(uint8_t)*8);
+    IP_or_IP_inv(plaintext, IP);
+    PC_1_permutation(duplicate_key);
+    /* 16 round encrypt*/
+    for (int j = 0; j < 16; j++){
+        /* compute round key */
+        memset(subkey, 0, sizeof(subkey));
+        memset(&temp1, 0, sizeof(temp1));
+        memset(&temp2, 0, sizeof(temp2));
+        temp1 = (duplicate_key[0] << 21) | (duplicate_key[1] << 14) | (duplicate_key[2] << 7) | duplicate_key[3];
+        temp2 = (duplicate_key[4] << 21) | (duplicate_key[5] << 14) | (duplicate_key[6] << 7) | duplicate_key[7];
+        temp1 = right_rot(temp1, shift_table2[j]);
+        temp2 = right_rot(temp2, shift_table2[j]);
+        for (int i = 0; i < 4; i++){
+            duplicate_key[3 - i] = temp1 & 0b1111111;
+            duplicate_key[7 - i] = temp2 & 0b1111111;
+            temp1 = temp1 >> 7;
+            temp2 = temp2 >> 7;
+        }
+        PC_2_permutation(duplicate_key, subkey);
+
+        /* compute f function */
+        Expansion(plaintext+4, expansion);
+        /* XOR operation */
+        for (int i = 0; i < 8; i++){
+            expansion[i] = expansion[i] ^ subkey[i]; 
+        }
+        S_box(expansion);
+        P_perm_and_xored(expansion, plaintext);
+
+        /* exchange L and R*/
+        if(j != 15){
+            for (int i = 0; i < 4; i++){
+                plaintext[i] = plaintext[i] ^ plaintext[4 + i];
+                plaintext[4 + i] = plaintext[i] ^ plaintext[4 + i];
+                plaintext[i] = plaintext[i] ^ plaintext[4 + i];
+            } 
+        }
+/*         printf("round [%d] : ", j+1);
+        for (int i = 0; i < 8; i++){
+            printf("%02X", plaintext[i]);
+            if(i+1==4){
+               printf(" ");
+            }
+        } */
+
+    }
+
+    IP_or_IP_inv(plaintext, IP_inv);
+/*     printf("\n================================================\n");
+    printf("plaintext : ");
+    for (int i = 0; i < 8; i++){
+        printf("%02X", plaintext[i]);
+    } */
+    return 0;
+}
+
 
