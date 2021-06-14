@@ -69,6 +69,8 @@ int main(int argc, char* argv[]){
         printf("T (Encrypt 100000 times) = %f sec\n", diff);
     }
     else{
+
+        printf("\n===========================test encrypt=============================\n");
         FILE * fp;
         fp = fopen(filename,"r");
         char* txt = malloc(sizeof(char)*6100);
@@ -102,6 +104,50 @@ int main(int argc, char* argv[]){
             }
 
             DES_encrypt(plaintext, ciphertext, key);
+    
+            if(memcmp(ciphertext, test_ciphertext, sizeof(uint8_t)*8)==0){
+                printf("test[%d] : passed\n", j+1);
+            }
+            else{
+                printf("test[%d] : failed\n", j+1);
+                free(txt);
+                return -1;
+            }
+        }
+        free(txt);
+
+        printf("\n===========================test decrypt=============================\n");
+        fp = fopen(filename,"r");
+        txt = malloc(sizeof(char)*6100);
+        fread(txt, sizeof(char), 6080, fp);
+        for (int j = 0; j < 64; j++){
+            uint8_t plaintext[8];
+            uint8_t test_ciphertext[8];
+            uint8_t ciphertext[8];
+            uint8_t key[8];
+            char string_key[8][3];
+            char string_plaintext[8][3];
+            char string_test_ciphertext[8][3];
+
+            memset(string_key, 0, sizeof(string_key));
+            for (int i = 0; i < 8; i++){
+                string_key[i][0] = txt[18+2*i+95*j];
+                string_key[i][1] = txt[19+2*i+95*j];
+                string_key[i][2] = '\0';     
+                string_plaintext[i][0] = txt[47+2*i+95*j];
+                string_plaintext[i][1] = txt[48+2*i+95*j];
+                string_plaintext[i][2] = '\0'; 
+                string_test_ciphertext[i][0] = txt[77+2*i+95*j];
+                string_test_ciphertext[i][1] = txt[78+2*i+95*j];
+                string_test_ciphertext[i][2] = '\0';        
+            }
+            for (int i = 0; i < 8; i++){
+                key[i] = (uint8_t) strtoul(string_key[i], NULL, 16);
+                plaintext[i] = (uint8_t) strtoul(string_plaintext[i], NULL, 16);
+                test_ciphertext[i] = (uint8_t) strtoul(string_test_ciphertext[i], NULL, 16);
+            }
+
+            DES_decrypt(plaintext, ciphertext, key);
     
             if(memcmp(ciphertext, test_ciphertext, sizeof(uint8_t)*8)==0){
                 printf("test[%d] : passed\n", j+1);
